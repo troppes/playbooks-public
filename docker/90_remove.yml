@@ -11,7 +11,7 @@
     set_fact:
       container_names: "{{ [] | zip_longest(roles, fillvalue='/') | map('join') | list +
         [] | zip_longest(additional_containers, fillvalue='/') |  map('join') }}"
-    when: services is not defined
+    when: services is not defined and service is not defined
 
   - name: Create list from containers in the command line
     set_fact:

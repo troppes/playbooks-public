@@ -5,7 +5,7 @@ This playbooks deploys and mangages the server stack for reitz.dev
 The containers needed as well as the default user can be set in: `group_vars/all.yml`.
 If a role is added and the container name is different than the role name, or more than one containers are defined, please add the names of the container to `additional_containers`.
 
-And example for a configuration file of the host can be found in : `host_vars/example.yml`
+And example for a configuration file of the host can be found in : `host_vars/example_dist.yml`
 
 Before running `ansible-galaxy collection install` needs to be called
 

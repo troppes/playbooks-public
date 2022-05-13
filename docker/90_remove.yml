@@ -11,13 +11,13 @@
     set_fact:
       container_names: "{{ [] | zip_longest(roles, fillvalue='/') | map('join') | list +
         [] | zip_longest(additional_containers, fillvalue='/') |  map('join') }}"
-    when: containers is not defined
+    when: services is not defined
 
   - name: Create list from containers in the command line
     set_fact:
-      container_names: "{{ ([] | zip_longest(containers, fillvalue='/') | map('join') | list) if containers is defined else
-        ([] | zip_longest([container], fillvalue='/') | map('join') | list) }}"
-    when: containers is defined or container is defined
+      container_names: "{{ ([] | zip_longest(services, fillvalue='/') | map('join') | list) if services is defined else
+        ([] | zip_longest([service], fillvalue='/') | map('join') | list) }}"
+    when: services is defined or service is defined
 
   - name: Find containers by name
     set_fact:

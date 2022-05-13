@@ -16,8 +16,7 @@ Deploys only a single role
 ### extra_vars arguments 
 | Syntax      | Description |
 | ----------- | ----------- |
-| serivce=Name   | Deploys the given service |
-
+| service=Name   | Deploys the given service |
 
 ### Examples: 
 `ansible-playbook 01_deploy_single.yml -e=service=NAME --ask-vault-pass`
@@ -29,16 +28,16 @@ Stops and deletes containers created by Ansible.
 ### extra_vars arguments 
 | Syntax      | Description |
 | ----------- | ----------- |
-| only_stop=1       | Only stops the containers |
-| container=Name1   | Removes/Stops only the given Container |
-| {"containers":["Name1", "Name2"]}   | Removes/Stops only the given Containers |
+| only_stop=1       | Only stops the service |
+| service=Name1   | Removes/Stops only the given service |
+| {"services":["Name1", "Name2"]}   | Removes/Stops only the given service |
 | remove_images=1   | Removes all images **!Warning!** Removes images not used by ansible as well |
 
 
 ### Examples: 
 `ansible-playbook 90_remove.yml --extra-vars="only_stop=1"` \
-`ansible-playbook 90_remove.yml --extra-vars '{"containers":["Name1", "Name2"]}'` \
-`ansible-playbook 90_remove.yml --e=container=Name1 --ask-vault-pass`
+`ansible-playbook 90_remove.yml --extra-vars '{"services":["Name1", "Name2"]}'` \
+`ansible-playbook 90_remove.yml --e=service=Name1 --ask-vault-pass`
 
 
 ## Playbook: 10_setup_backup.yml

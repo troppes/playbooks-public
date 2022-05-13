@@ -1,0 +1,89 @@
+---
+- name: Create Folder for Nextcloud
+  ansible.builtin.file:
+    path: /srv/nextcloud
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+  notify:
+    - Update Phone Region
+
+- name: Check if DB exists
+  command: docker exec mariadb bash -l -c 'mysql -p{{ mariadb_root_password | quote }} -e "SHOW DATABASES;" | grep -c {{ nextcloud_mariadb_database | string }}'
+  register: result
+  changed_when: result.stdout == "0"
+  retries: 6
+  delay: 5
+  failed_when: result.stderr_lines | length > 0
+  until: result is not failed  # If the DB is not up yet, try for 30 sec
+
+- name: Create Database
+  command: >
+    docker exec mariadb bash -l -c 'mysql -p{{ mariadb_root_password | quote }} -e "
+     CREATE DATABASE {{ nextcloud_mariadb_database | string }};"'
+  when: result.stdout == "0"
+
+- name: Create Database User
+  command: >
+   docker exec mariadb mysql -p{{ mariadb_root_password | quote }} -e "
+     CREATE USER '{{ nextcloud_mariadb_username | string }}'@'%' IDENTIFIED BY '{{ nextcloud_mariadb_password | string }}';"
+  when: result.stdout == "0"
+
+- name: Give Priviliges
+  command: >
+   docker exec mariadb mysql -p{{ mariadb_root_password | quote }} -e "
+     GRANT ALL PRIVILEGES ON {{ nextcloud_mariadb_database | string }}.* TO '{{ nextcloud_mariadb_username | string }}'@'%';"
+  when: result.stdout == "0"
+
+- name: Deploy Nextcloud
+  community.docker.docker_container:
+    image: nextcloud:latest
+    name: nextcloud
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true  # Removes Container from all Networks not contained in networks parameter
+    network_mode: default
+    networks:
+      - name: "traefik"
+      - name: "mariadb"
+    volumes:
+      - /srv/nextcloud:/var/www/html
+    env:
+      VIRTUAL_HOST: "cloud.{{ base_url | string }}"
+      MYSQL_HOST: "{{ db_host | string }}"
+      MYSQL_DATABASE: "{{ nextcloud_mariadb_database | string }}"
+      MYSQL_USER: "{{ nextcloud_mariadb_username | string }}"
+      MYSQL_PASSWORD: "{{ nextcloud_mariadb_password | string }}"
+      APACHE_DISABLE_REWRITE_IP: "1"
+      NEXTCLOUD_TRUSTED_DOMAINS: "{{ nextcloud_trusted_domains | string }}"
+      TRUSTED_PROXIES: "{{ nextcloud_trusted_proxies | string }}"
+      NEXTCLOUD_ADMIN_USER: "{{ nextcloud_admin_user | string }}"
+      NEXTCLOUD_ADMIN_PASSWORD: "{{ nextcloud_admin_pass | string }}"
+      SMTP_HOST: "{{ mail_host | string }}"
+      SMTP_SECURE: "{{ mail_encryption | string }}"
+      SMTP_PORT: "{{ mail_port | string }}"
+      SMTP_AUTHTYPE: "LOGIN"
+      SMTP_NAME: "{{ mail_username | string }}"
+      SMTP_PASSWORD: "{{ mail_password | string }}"
+      MAIL_FROM_ADDRESS: "{{ mail_from | string }}"
+      MAIL_DOMAIN: "{{ base_url | string }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.nextcloud.rule: "Host(`cloud.{{ base_url | string }}`)"
+      traefik.http.routers.nextcloud.tls: "true"
+      traefik.http.routers.nextcloud.tls.certresolver: "cert-reitz"
+      traefik.http.routers.nextcloud.entrypoints: "web-secure"
+      traefik.http.routers.nextcloud.middlewares: "nextcloud-headers@file, caldav-wellknown@file"
+      traefik.http.routers.nextcloud-unsecure.rule: "Host(`cloud.{{ base_url | string }}`)"
+      traefik.http.routers.nextcloud-unsecure.entrypoints: "web"
+      traefik.http.routers.nextcloud-unsecure.middlewares: "redirect-https@file, caldav-wellknown@file"
+  notify:
+    - Install SVG Support
+
+- name: Create Cron Job for Nextcloud
+  ansible.builtin.cron:
+    name: "Nextcloud"
+    minute: "*/5"
+    user: "{{ remote_user | string }}"
+    job: "docker exec -u www-data nextcloud php -f /var/www/html/cron.php"

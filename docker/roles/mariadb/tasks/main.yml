@@ -1,0 +1,26 @@
+---
+- name: Create MariaDB folder
+  ansible.builtin.file:
+    path: /srv/mariadb/init
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+
+- name: Deploy MariaDB
+  community.docker.docker_container:
+    image: mariadb:latest
+    name: mariadb
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true
+    network_mode: default
+    networks:
+      - name: "mariadb"
+    volumes:
+      - /srv/mariadb/data:/var/lib/mysql  # Requested, specifies the path to MySQL data persistent store.
+      - /srv/mariadb/conf.d:/etc/mysql/conf.d
+    env:
+      MYSQL_LOG_CONSOLE: "true"
+      MYSQL_ROOT_PASSWORD: "{{ mariadb_root_password | string }}"
+    command: "--transaction-isolation=READ-COMMITTED --binlog-format=ROW --skip-innodb-read-only-compressed"

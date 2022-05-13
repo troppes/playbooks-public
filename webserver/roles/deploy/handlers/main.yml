@@ -1,0 +1,10 @@
+---
+- name: Cleanup
+  file:
+    path: /home/flo/web
+    state: absent
+
+- name: Remove Nodescript
+  file:
+    path: /tmp/node.sh
+    state: absent

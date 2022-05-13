@@ -1,0 +1,48 @@
+---
+- name: Create Backup Folder
+  file:
+    path: "{{ backup_path | string }}/backups"
+    owner: "{{ remote_user | string }}"
+    group: "{{ remote_user | string }}"
+    state: directory
+    mode: '0775'
+
+- name: Create Script
+  file:
+    path: "{{ backup_path | string }}/retrive.sh"
+    owner: "{{ remote_user | string }}"
+    group: "{{ remote_user | string }}"
+    state: touch
+    mode: '0770'
+    access_time: preserve  # to not trigger state changed evertime
+    modification_time: preserve  # to not trigger state changed evertime
+
+- name: Add Backup Retrival
+  lineinfile:
+    path: "{{ backup_path | string }}/retrive.sh"
+    line: >-
+      scp -o StrictHostKeyChecking=accept-new -P {{ backup_server_port | string }}
+      {{ remote_user | string }}@{{ backup_server | string }}:/srv/backup/backup.7z
+      {{ backup_path | string }}/backups/backup_$(date "+%Y%m%d").7z
+
+- name: Add Backup Log Retrival
+  lineinfile:
+    path: "{{ backup_path | string }}/retrive.sh"
+    line: >-
+      scp -o StrictHostKeyChecking=accept-new -P {{ backup_server_port | string }}
+      {{ remote_user | string }}@{{ backup_server | string }}:/srv/backup/backup.log
+      {{ backup_path | string }}/backups/backup_$(date "+%Y%m%d").log
+    state: "{{ 'present' if retrive_logs else 'absent' }}"
+
+- name: Add Backup Deletion
+  lineinfile:
+    path: "{{ backup_path | string }}/retrive.sh"
+    line: find backups/* -mtime +{{ remove_after_days | string }} -exec rm {} \;
+
+- name: Cron Backup Script
+  ansible.builtin.cron:
+    name: "Get Backup"
+    minute: "0"
+    hour: "2"
+    user: "{{ remote_user | string }}"
+    job: "sh {{ backup_path | string }}/retrive.sh"

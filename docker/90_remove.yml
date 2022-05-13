@@ -1,0 +1,46 @@
+---
+- hosts: netcup
+  gather_facts: false
+  tasks:
+  - name: Get running containers
+    docker_host_info:
+      containers: true
+    register: docker_info
+
+  - name: Prefix List to make comparisons possible
+    set_fact:
+      container_names: "{{ [] | zip_longest(roles, fillvalue='/') | map('join') | list +
+        [] | zip_longest(additional_containers, fillvalue='/') |  map('join') }}"
+    when: containers is not defined
+
+  - name: Create list from containers in the command line
+    set_fact:
+      container_names: "{{ ([] | zip_longest(containers, fillvalue='/') | map('join') | list) if containers is defined else
+        ([] | zip_longest([container], fillvalue='/') | map('join') | list) }}"
+    when: containers is defined or container is defined
+
+  - name: Find containers by name
+    set_fact:
+      containers_found: "{{ containers_found | default([]) + [ item ] }}"
+    loop: "{{ docker_info.containers }}"
+    when: "item.Names[0] in container_names"  # Check if the first name of the container is the same as the ansible script
+
+  - name: Stop/Delete running containers
+    docker_container:
+      name: "{{ item }}"
+      state: "{{ 'stopped' if only_stop is defined else 'absent' }}"
+    loop: "{{ containers_found | default([]) | map(attribute='Id') | list }}"
+
+  - name: Get details of all images
+    docker_host_info:
+      images: true
+      verbose_output: true
+    register: image_info
+    when: remove_images is defined
+
+  - name: Remove all images
+    docker_image:
+      name: "{{ item }}"
+      state: absent
+    loop: "{{ image_info.images | map(attribute='Id') | list }}"
+    when: remove_images is defined

@@ -1,0 +1,40 @@
+http:
+  routers:
+    api-unsecure:
+      rule: "Host(`url.host.com`)"
+      service: api@internal
+      middlewares:
+        - redirect-https
+      entryPoints:
+        - web
+    api:
+      rule: "Host(`url.host.com`)"
+      service: api@internal
+      tls:
+        certResolver: cert-reitz
+      middlewares:
+        - auth
+      entryPoints:
+        - web-secure
+
+  middlewares:
+    auth:
+      basicAuth:
+        users:
+          - "user:password"
+    redirect-https:
+      redirectScheme:
+        scheme: https
+    nextcloud-headers:
+      headers:
+        customFrameOptionsValue: SAMEORIGIN
+        frameDeny: true
+        sslRedirect: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 15552000
+    caldav-wellknown:
+      redirectRegex:
+        regex: "https://(.*)/.well-known/(card|cal)dav"
+        replacement: "https://${1}/remote.php/dav/"
+        permanent: true

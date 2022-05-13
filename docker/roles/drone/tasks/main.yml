@@ -1,0 +1,74 @@
+---
+- name: Create Folder for Drone
+  ansible.builtin.file:
+    path: /srv/drone
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+
+- name: Deploy Drone
+  community.docker.docker_container:
+    image: drone/drone:latest
+    name: drone
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true
+    network_mode: default
+    networks:
+      - name: "traefik"
+    volumes:
+      - /srv/drone:/data
+    env:
+      DRONE_GITHUB_CLIENT_ID: "{{ drone_github_client_id | string }}"
+      DRONE_GITHUB_CLIENT_SECRET: "{{ drone_github_client_secret | string }}"
+      DRONE_RPC_SECRET: "{{ drone_rpc_secret | string }}"
+      DRONE_SERVER_HOST: "drone.{{ base_url | string }}"
+      DRONE_SERVER_PROTO: https
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.drone.rule: "Host(`drone.{{ base_url | string }}`)"
+      traefik.http.routers.drone.tls: "true"
+      traefik.http.routers.drone.tls.certresolver: "cert-reitz"
+      traefik.http.routers.drone.entrypoints: "web-secure"
+      traefik.http.routers.drone-unsecure.rule: "Host(`drone.{{ base_url | string }}`)"
+      traefik.http.routers.drone-unsecure.entrypoints: "web"
+      traefik.http.routers.drone-unsecure.middlewares: "redirect-https@file"
+
+- name: Deploy Drone Docker Runner
+  community.docker.docker_container:
+    image: drone/drone-runner-docker:latest
+    name: drone-runner-docker
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true
+    network_mode: default
+    networks:
+      - name: "traefik"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    env:
+      DRONE_RPC_SECRET: "{{ drone_rpc_secret | string }}"
+      DRONE_RPC_HOST: "drone.{{ base_url | string }}"
+      DRONE_RPC_PROTO: "https"
+      DRONE_RUNNER_CAPACITY: "2"
+      DRONE_RUNNER_NAME: "{{ base_url | string }}"
+
+- name: Deploy Drone SSH Runner
+  community.docker.docker_container:
+    image: drone/drone-runner-ssh:latest
+    name: drone-runner-ssh
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true
+    network_mode: default
+    networks:
+      - name: "traefik"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    env:
+      DRONE_RPC_SECRET: "{{ drone_rpc_secret | string }}"
+      DRONE_RPC_HOST: "drone.{{ base_url | string }}"
+      DRONE_RPC_PROTO: "https"
+      DRONE_RUNNER_CAPACITY: "2"
+      DRONE_RUNNER_NAME: "{{ base_url | string }}"

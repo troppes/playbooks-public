@@ -1,0 +1,9 @@
+---
+- name: Install and configure web-server
+  hosts: khadas
+  remote_user: flo
+  become: true
+  vars:
+    ansible_become_pass: "{{ root_pass }}"
+  roles:
+    - webserver

@@ -1,0 +1,19 @@
+---
+- name: Setup Backup
+  hosts: netcup
+  remote_user: "{{ remote_user }}"
+  become: true
+  vars:
+    ansible_become_pass: "{{ root_pass }}"
+  roles:
+    - backup
+
+- name: Setup Storage
+  hosts: khadas
+  remote_user: "{{ remote_user }}"
+  become: true
+  vars:
+    ansible_become_pass: "{{ root_pass }}"
+  tasks:
+  roles:
+    - backupRetrival

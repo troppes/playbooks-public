@@ -1,0 +1,17 @@
+---
+- name: Update Phone Region
+  community.docker.docker_container_exec:
+    container: nextcloud
+    command: "php occ config:system:set default_phone_region --value='DE'"
+    chdir: /var/www/html
+    user: www-data
+  register: result
+  retries: 6
+  delay: 5
+  until: result is not failed
+
+- name: Install SVG Support
+  community.docker.docker_container_exec:
+    container: nextcloud
+    command: /bin/bash -c "apt -y update && apt -y install libmagickcore-6.q16-6-extra"
+    chdir: /

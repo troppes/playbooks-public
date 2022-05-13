@@ -1,0 +1,10 @@
+---
+- name: Create Traefik External Network
+  community.docker.docker_network:
+    name: traefik
+    internal: false
+
+- name: Create Database Internal Network
+  community.docker.docker_network:
+    name: mariadb
+    internal: true

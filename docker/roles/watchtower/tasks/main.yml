@@ -1,0 +1,15 @@
+---
+- name: Deploy Watchtower
+  community.docker.docker_container:
+    image: containrrr/watchtower
+    name: watchtower
+    state: started
+    restart_policy: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    env:
+      WATCHTOWER_SCHEDULE: "0 0 4 * * *"
+      TZ: "Europe/Berlin"
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_NOTIFICATIONS: "shoutrrr"
+      WATCHTOWER_NOTIFICATION_URL: "{{ watchtower_notification_url | string }}"

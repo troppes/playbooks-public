@@ -1,0 +1,64 @@
+---
+- name: Create Folder for Acme
+  ansible.builtin.file:
+    path: /srv/traefik
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+
+- name: Create Acme
+  ansible.builtin.file:
+    path: /srv/traefik/acme.json
+    owner: root
+    group: root
+    state: touch
+    mode: '0600'
+    access_time: preserve  # to not trigger state changed evertime
+    modification_time: preserve  # to not trigger state changed evertime
+
+- name: Copy Traefik Config (dynamic_conf.yml)
+  template:
+    src: dynamic_conf.yml
+    dest: /srv/traefik/dynamic_conf.yml
+    owner: flo
+    group: flo
+    mode: '0664'
+
+- name: Copy Traefik Config (traefik.yml)
+  template:
+    src: traefik.yml
+    dest: /srv/traefik/traefik.yml
+    owner: flo
+    group: flo
+    mode: '0664'
+
+- name: Deploy Traefik
+  community.docker.docker_container:
+    image: traefik:latest
+    name: traefik
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true  # Removes Container from all Networks not contained in networks parameter
+    network_mode: default
+    networks:
+      - name: "traefik"
+    ports:
+      - "80:80"
+      - "443:443"
+    #  - "2244:2244"
+    #  - "25565:25565/tcp"
+    #  - "25565:25565/udp"
+    #  - "27015:27015/tcp"
+    #  - "27015:27015/udp"
+      - "9987:9987/udp"
+      - "10011:10011"
+      - "30033:30033"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /srv/traefik/traefik.yml:/traefik.yml
+      - /srv/traefik/dynamic_conf.yml:/dynamic_conf.yml
+      - /srv/traefik/acme.json:/acme.json
+    security_opts:
+      - no-new-privileges:true

@@ -1,0 +1,35 @@
+---
+- name: Find Sevices
+  service_facts:
+
+- name: Stop Nginx
+  service:
+    name: nginx
+    state: stopped
+  when: "'nginx' in services"
+
+- name: Remove Nginx
+  apt:
+    name: nginx*  # Wildcard for removing nginx and nginx-common
+    state: absent  # Desired State
+    purge: true
+    autoremove: true
+  when: "'nginx' in services"
+
+- name: Remove Yarn
+  community.general.npm:
+    name: yarn
+    global: true
+    state: absent
+
+- name: Remove NodeJS
+  apt:
+    name: nodejs
+    state: absent
+    purge: true
+    autoremove: true
+
+- name: Remove Website
+  file:
+    path: /home/flo/site
+    state: absent

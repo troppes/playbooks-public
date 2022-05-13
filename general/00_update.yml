@@ -1,0 +1,20 @@
+---
+- name: Update Systems
+  hosts: all
+  remote_user: flo
+  become: true
+  vars:
+    ansible_become_pass: "{{ root_pass }}"
+  tasks:
+    - name: Update Cache
+      apt:
+        update_cache: true
+
+    - name: Update all packages
+      apt:
+        name: "*"
+        state: present
+
+    - name: Upgrade OS
+      apt:
+        upgrade: dist

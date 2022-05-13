@@ -1,0 +1,11 @@
+---
+- name: Update and Deploy
+  hosts: khadas
+  remote_user: flo
+  become: true
+  vars:
+    ansible_become_pass: "{{ root_pass }}"
+  roles:
+    - common
+    - deploy
+    - webserver

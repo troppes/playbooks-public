@@ -1,0 +1,24 @@
+---
+- name: Deploy Website
+  community.docker.docker_container:
+    image: floreitz/website:latest
+    name: website
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true  # Removes Container from all Networks not contained in networks parameter
+    network_mode: default
+    networks:
+      - name: "traefik"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.website.rule: "Host(`{{ base_url | string }}`, `florian-reitz.de`)"
+      traefik.http.routers.website.priority: "1"
+      traefik.http.routers.website.tls: "true"
+      traefik.http.routers.website.tls.certresolver: "cert-reitz"
+      traefik.http.routers.website.entrypoints: "web-secure"
+      traefik.http.routers.website.service: "website-lb"
+      traefik.http.routers.website-unsecure.rule: "Host(`{{ base_url | string }}`, `florian-reitz.de`)"
+      traefik.http.routers.website-unsecure.entrypoints: "web"
+      traefik.http.routers.website-unsecure.middlewares: "redirect-https@file"
+      # load-Balancer to route to another port
+      traefik.http.services.website-lb.loadbalancer.server.port: "8080"

@@ -1,0 +1,11 @@
+---
+- name: Reboot Systems
+  hosts: all
+  remote_user: flo
+  become: true
+  vars:
+    ansible_become_pass: "{{ root_pass }}"
+  tasks:
+    - name: Reboot the machine
+      reboot:
+        reboot_timeout: 60

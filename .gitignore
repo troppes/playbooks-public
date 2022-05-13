@@ -1,0 +1,15 @@
+# Webserver
+webserver/host_vars/*
+!webserver/host_vars/example_dist.yml
+
+# General
+general/host_vars/*
+!general/host_vars/example_dist.yml
+
+# Docker
+docker/group_vars/*
+!docker/group_vars/all_dist.yml
+docker/host_vars/*
+!docker/host_vars/example_dist.yml
+docker/roles/traefik/templates/dynamic_conf.yml
+docker/roles/traefik/templates/traefik.yml

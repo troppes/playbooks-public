@@ -1,0 +1,67 @@
+# General
+base_url:
+base_url_private:
+root_pass:
+tz:
+db_host:
+db_port:
+
+# MariaDB
+mariadb_root_password:
+
+# Backup
+backup_mariadb_username:
+backup_mariadb_password:
+
+# Nextcloud
+nextcloud_mariadb_database:
+nextcloud_mariadb_username:
+nextcloud_mariadb_password:
+nextcloud_trusted_proxies:
+nextcloud_trusted_domains:
+nextcloud_admin_user:
+nextcloud_admin_pass:
+
+# Vaultwarden
+vaultwarden_admin_token:
+
+# Mail-Settings
+mail_driver:
+mail_host:
+mail_port:
+mail_from:
+mail_username:
+mail_password:
+mail_encryption:
+
+# Drone
+drone_github_client_id:
+drone_github_client_secret:
+drone_rpc_secret:
+
+# Teamspeak
+ts_mariadb_database:
+ts_mariadb_username:
+ts_mariadb_password:
+
+# Photoprism
+ps_mariadb_database:
+ps_mariadb_username:
+ps_mariadb_password:
+ps_admin_password:
+
+# Directus
+directus_auth_publickey:
+directus_auth_secretkey:
+directus_mariadb_database:
+directus_mariadb_username:
+directus_mariadb_password:
+
+# Watchtower
+watchtower_notification_url:
+
+# Website
+vite_app_backend_url:
+vite_app_external_assets_url:
+vite_app_access_token:
+vite_app_lightgallery_key:

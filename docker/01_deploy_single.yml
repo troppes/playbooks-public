@@ -1,0 +1,11 @@
+---
+- hosts: netcup
+  remote_user: "{{ remote_user }}"
+  become: true
+  vars:
+    ansible_become_pass: "{{ root_pass }}"
+  tasks:
+    - name: Run Role
+      include_role:
+        name: "{{ service }}"
+      when: service is defined

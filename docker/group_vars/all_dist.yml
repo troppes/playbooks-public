@@ -1,0 +1,25 @@
+---
+remote_user: "user"
+roles:
+    - common
+    - mariadb
+    - traefik
+    - vaultwarden
+    - watchtower
+    - drone
+    - teamspeak
+    - sinusbot
+    - directus
+    - website
+    - nextcloud
+additional_containers:
+    - drone-runner-docker
+    - drone-runner-ssh
+
+# Backup Storage
+retrive_logs: false
+backup_path: "/home/user/backup"
+remove_after_days: 7
+backup_server: url.home
+backup_server_port: 22
+backup_password: pass

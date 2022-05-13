@@ -1,0 +1,45 @@
+---
+- name: Download Node
+  get_url:
+    url: https://deb.nodesource.com/setup_16.x
+    dest: /tmp/node.sh
+    mode: '0777'
+  notify: Remove Nodescript
+
+- name: Install Nodesource  # noqa no-changed-when
+  command: sh /tmp/node.sh
+
+- name: Install Node
+  apt:
+    name: nodejs
+    state: present
+
+- name: Install Yarn per npm
+  community.general.npm:
+    name: yarn
+    global: true
+
+- name: Git checkout  # Maybe check which version is deployed / Necessary to search webpage
+  git:
+    repo: 'https://github.com/troppes/personal-website.git'
+    dest: /home/flo/web
+    version: v0.8.0
+  notify: Cleanup
+
+- name: Deploy Custom configs
+  template:
+    mode: 0777
+    src: .env.local
+    dest: /home/flo/web/.env.local
+
+- name: Yarn Install
+  community.general.yarn:
+    path: /home/flo/web
+
+- name: Yarn Build  # noqa no-changed-when Disabled Rule since this commands needs to run always
+  command:
+    cmd: yarn build
+    chdir: /home/flo/web
+
+- name: Move Folder  # noqa no-changed-when move is not available as module
+  command: mv /home/flo/web/dist /home/flo/site

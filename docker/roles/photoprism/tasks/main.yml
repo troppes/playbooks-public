@@ -1,0 +1,124 @@
+---
+- name: Create Photoprism folder
+  ansible.builtin.file:
+    path: /srv/photoprism/
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+
+- name: Create Photoprism original folder
+  ansible.builtin.file:
+    path: /srv/photoprism/original
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+
+- name: Create Photoprism import folder
+  ansible.builtin.file:
+    path: /srv/photoprism/import
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+
+- name: Create Photoprism storage folder
+  ansible.builtin.file:
+    path: /srv/photoprism/storage
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+
+- name: Check if DB exists
+  command: docker exec mariadb bash -l -c 'mysql -p{{ mariadb_root_password | quote }} -e "SHOW DATABASES;" | grep -c {{ ps_mariadb_database | string }}'
+  register: result
+  changed_when: result.stdout == 0
+  retries: 6
+  delay: 5
+  failed_when: result.stderr_lines | length > 0  # If the DB is not up yet, try for 30 sec
+  until: result is not failed
+
+- name: Create Database
+  command: >
+    docker exec mariadb bash -l -c 'mysql -p{{ mariadb_root_password | quote }} -e "
+     CREATE DATABASE {{ ps_mariadb_database | string }};"'
+  when: result.stdout == "0"
+
+- name: Create Database User
+  command: >
+   docker exec mariadb mysql -p{{ mariadb_root_password | quote }} -e "
+     CREATE USER '{{ ps_mariadb_username | string }}'@'%' IDENTIFIED BY '{{ ps_mariadb_password | string }}';"
+  when: result.stdout == "0"
+
+- name: Give Priviliges
+  command: >
+   docker exec mariadb mysql -p{{ mariadb_root_password | quote }} -e "
+     GRANT ALL PRIVILEGES ON {{ ps_mariadb_database | string }}.* TO '{{ ps_mariadb_username | string }}'@'%';"
+  when: result.stdout == "0"
+
+- name: Deploy Photoprism
+  community.docker.docker_container:
+    image: photoprism/photoprism:latest
+    name: photoprism
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true
+    network_mode: default
+    networks:
+      - name: "traefik"
+      - name: "mariadb"
+    security_opts:
+      - seccomp:unconfined
+      - apparmor:unconfined
+    volumes:
+      - "/srv/photoprism/originals:/photoprism/originals"
+      # - "/example/family:/photoprism/originals/family" # *additional* media folders
+      - "/srv/photoprism/import:/photoprism/import"
+      - "/srv/photoprism/storage:/photoprism/storage" 
+    working_dir: "/photoprism"
+    env:
+      PHOTOPRISM_ADMIN_PASSWORD: "{{ ps_admin_password | string }}"
+      PHOTOPRISM_SITE_URL: "http://photos.{{ base_url | string }}/"
+      PHOTOPRISM_ORIGINALS_LIMIT: "5000"               # file size limit for originals in MB
+      PHOTOPRISM_HTTP_COMPRESSION: "gzip"
+      PHOTOPRISM_DEBUG: "false"
+      PHOTOPRISM_PUBLIC: "false"
+      PHOTOPRISM_READONLY: "false" 
+      PHOTOPRISM_SPONSOR: "true"
+      PHOTOPRISM_EXPERIMENTAL: "false"               # enables experimental features
+      PHOTOPRISM_DISABLE_CHOWN: "false"              # disables storage permission updates on startup
+      PHOTOPRISM_DISABLE_WEBDAV: "false"             # disables built-in WebDAV server
+      PHOTOPRISM_DISABLE_SETTINGS: "false"           # disables Settings in Web UI
+      PHOTOPRISM_DISABLE_TENSORFLOW: "false"         # disables all features depending on TensorFlow
+      PHOTOPRISM_DISABLE_FACES: "false"              # disables facial recognition
+      PHOTOPRISM_DISABLE_CLASSIFICATION: "false"     # disables image classification
+      PHOTOPRISM_DARKTABLE_PRESETS: "false"          # enables Darktable presets and disables concurrent RAW conversion
+      PHOTOPRISM_DETECT_NSFW: "true"                # flag photos as private that MAY be offensive (requires TensorFlow)
+      PHOTOPRISM_UPLOAD_NSFW: "true"                 # allows uploads that MAY be offensive
+      PHOTOPRISM_DATABASE_DRIVER: "mysql"
+      PHOTOPRISM_DATABASE_SERVER: "{{ db_host | string }}"
+      PHOTOPRISM_DATABASE_NAME: "{{ ps_mariadb_database | string }}"
+      PHOTOPRISM_DATABASE_USER: "{{ ps_mariadb_username | string }}" 
+      PHOTOPRISM_DATABASE_PASSWORD: "{{ ps_mariadb_password | string }}"
+      PHOTOPRISM_SITE_TITLE: "Flo's Photos"
+      PHOTOPRISM_SITE_CAPTION: "Photogallery of Flo"
+      PHOTOPRISM_SITE_DESCRIPTION: ""
+      PHOTOPRISM_SITE_AUTHOR: "Florian Reitz"
+      HOME: "/photoprism"
+    labels:
+      traefik.enable: "true"
+      # Vaultwarden Websocket
+      traefik.http.routers.photoprism.rule: "Host(`photos.{{ base_url | string }}`)"
+      traefik.http.routers.photoprism.entrypoints: "web-secure"
+      traefik.http.routers.photoprism.tls: "true"
+      traefik.http.routers.photoprism.tls.certresolver: "cert-reitz"
+      traefik.http.routers.photoprism.service: "photoprism-lb"
+      # Vaultwarden Websocket HTTPS-Upgrade
+      traefik.http.routers.photoprism-unsecure.rule: "Host(`photos.{{ base_url | string }}`)"
+      traefik.http.routers.photoprism-unsecure.entrypoints: "web"
+      traefik.http.routers.photoprism-unsecure.middlewares: "redirect-https@file"
+      traefik.http.routers.photoprism-unsecure.service: "photoprism-lb"
+      # load-Balancer to route to another port
+      traefik.http.services.photoprism-lb.loadbalancer.server.port: "2342"

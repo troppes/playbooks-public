@@ -1,0 +1,13 @@
+---
+- name: Update Cache
+  apt:
+    update_cache: true
+
+- name: Update all packages
+  apt:
+    name: "*"
+    state: latest
+
+- name: Upgrade OS
+  apt:
+    upgrade: dist

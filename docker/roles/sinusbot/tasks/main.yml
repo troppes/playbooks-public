@@ -1,0 +1,50 @@
+---
+- name: Create Scripts-Folder for Sinusbot
+  ansible.builtin.file:
+    path: /srv/sinusbot/scripts
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+
+- name: Create Data-Folder for Sinusbot
+  ansible.builtin.file:
+    path: /srv/sinusbot/data
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+
+
+- name: Deploy Sinusbot
+  community.docker.docker_container:
+    image: sinusbot/docker
+    name: sinusbot
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true
+    network_mode: default
+    networks:
+      - name: "traefik"
+      - name: "mariadb"
+    volumes:
+      - /srv/sinusbot/scripts:/opt/sinusbot/scripts
+      - /srv/sinusbot/data:/opt/sinusbot/data
+    env:
+      UID: "1000"
+      GID: "1000"
+    labels:
+      traefik.enable: "true"
+      # SinusBot
+      traefik.http.routers.sinusbot.rule: "Host(`musicbot.{{ base_url_private | string }}`)"
+      traefik.http.routers.sinusbot.entrypoints: "web-secure"
+      traefik.http.routers.sinusbot.tls: "true"
+      traefik.http.routers.sinusbot.tls.certresolver: "cert-reitz"
+      traefik.http.routers.sinusbot.service: "sinusbot-lb"
+      # SinusBot HTTPS-Upgrade
+      traefik.http.routers.sinusbot-unsecure.rule: "Host(`musicbot.{{ base_url_private | string }}`)"
+      traefik.http.routers.sinusbot-unsecure.entrypoints: "web"
+      traefik.http.routers.sinusbot-unsecure.middlewares: "redirect-https@file"
+      traefik.http.routers.sinusbot-unsecure.service: "sinusbot-lb"
+      # load-Balancer to route to another port
+      traefik.http.services.sinusbot-lb.loadbalancer.server.port: "8087"

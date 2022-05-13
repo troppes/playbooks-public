@@ -1,0 +1,75 @@
+---
+- name: Create Backup Folders
+  file:
+    path: /srv/backup/scripts
+    owner: "{{ remote_user | string }}"
+    group: "{{ remote_user | string }}"
+    state: directory
+    mode: '0775'
+
+- name: Copy Backup Script
+  template:
+    src: backup.sh
+    dest: /srv/backup/backup.sh
+    owner: "{{ remote_user | string }}"
+    group: "{{ remote_user | string }}"
+    mode: '0770'
+
+- name: Check if User exists
+  command: >-
+    docker exec mariadb bash -l -c 'mysql -p{{ mariadb_root_password | quote }} -e "SELECT User FROM mysql.user;" |
+    grep -c {{ backup_mariadb_username | string }}'
+  register: result
+  changed_when: result.stdout == 0
+  retries: 6
+  delay: 5
+  failed_when: result.stderr_lines | length > 0  # If the DB is not up yet, try for 30 sec
+  until: result is not failed
+
+- name: Create Database User
+  command: >
+   docker exec mariadb mysql -p{{ mariadb_root_password | quote }} -e "
+     CREATE USER '{{ backup_mariadb_username | string }}'@'localhost' IDENTIFIED BY '{{ backup_mariadb_password | string }}';"
+  when: result.stdout == "0"
+
+- name: Give Priviliges
+  command: >
+   docker exec mariadb mysql -p{{ mariadb_root_password | quote }} -e "
+     GRANT SELECT, SHOW VIEW ON *.* TO '{{ backup_mariadb_username | string }}'@'localhost';"
+  when: result.stdout == "0"
+
+- name: Suffix List to make comparisons possible
+  set_fact:
+    backup_names: "{{ roles | product(['.sh']) | map('join') | list }}"
+
+- name: List all backup scripts for services
+  find:
+    paths: /srv/backup/scripts
+    patterns: "*.sh"
+  register: current_files
+
+- name: Delete scripts from non-running service
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  with_items: "{{ current_files.files }}"
+  when: item.path | basename not in backup_names
+
+- name: Copy Scripts for services
+  template:
+    src: "{{ item }}"
+    dest: "/srv/backup/scripts/"
+    owner: "{{ remote_user | string }}"
+    group: "{{ remote_user | string }}"
+    mode: '0770'
+  with_fileglob:
+    - "../templates/scripts/*"
+  when: item | basename in backup_names
+
+- name: Cron Backup Script
+  ansible.builtin.cron:
+    name: "Create backup"
+    minute: "0"
+    hour: "1"
+    user: "{{ remote_user | string }}"
+    job: "sh /srv/backup/backup.sh"

@@ -56,7 +56,7 @@ metrics:
   prometheus:
     addEntryPointsLabels: true
     addRoutersLabels: true
-    addServiceLabels: true
+    addServicesLabels: true
     buckets:
       - 1
       - 2

@@ -19,6 +19,7 @@
     networks:
       - name: "prometheus"
       - name: "traefik"
+      - name: "mariadb"
     volumes:
       - /srv/grafana:/var/lib/grafana
     labels:

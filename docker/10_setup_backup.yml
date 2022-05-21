@@ -1,7 +1,7 @@
 ---
 - name: Setup Backup
   hosts: netcup
-  remote_user: "{{ remote_user }}"
+  remote_user: "{{ user }}"
   become: true
   vars:
     ansible_become_pass: "{{ root_pass }}"
@@ -10,7 +10,7 @@
 
 - name: Setup Storage
   hosts: khadas
-  remote_user: "{{ remote_user }}"
+  remote_user: "{{ user }}"
   become: true
   vars:
     ansible_become_pass: "{{ root_pass }}"

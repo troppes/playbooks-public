@@ -65,3 +65,8 @@ vite_app_backend_url:
 vite_app_external_assets_url:
 vite_app_access_token:
 vite_app_lightgallery_key:
+
+# Grafana
+grafana_url:
+grafana_user:
+grafana_pass:

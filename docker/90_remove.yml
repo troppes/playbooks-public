@@ -9,8 +9,7 @@
 
   - name: Prefix List to make comparisons possible
     set_fact:
-      container_names: "{{ [] | zip_longest(roles, fillvalue='/') | map('join') | list +
-        [] | zip_longest(additional_containers, fillvalue='/') |  map('join') }}"
+      container_names: "{{ ([] | zip_longest(deployed_services, fillvalue='/') | map('join') | list) + ([] | zip_longest(additional_containers, fillvalue='/') |  map('join') | list) }}"
     when: services is not defined and service is not defined
 
   - name: Create list from containers in the command line

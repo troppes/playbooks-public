@@ -2,8 +2,8 @@
 - name: Create Backup Folders
   file:
     path: /srv/backup/scripts
-    owner: "{{ remote_user | string }}"
-    group: "{{ remote_user | string }}"
+    owner: "{{ user | string }}"
+    group: "{{ user | string }}"
     state: directory
     mode: '0775'
 
@@ -11,8 +11,8 @@
   template:
     src: backup.sh
     dest: /srv/backup/backup.sh
-    owner: "{{ remote_user | string }}"
-    group: "{{ remote_user | string }}"
+    owner: "{{ user | string }}"
+    group: "{{ user | string }}"
     mode: '0770'
 
 - name: Check if User exists
@@ -59,8 +59,8 @@
   template:
     src: "{{ item }}"
     dest: "/srv/backup/scripts/"
-    owner: "{{ remote_user | string }}"
-    group: "{{ remote_user | string }}"
+    owner: "{{ user | string }}"
+    group: "{{ user | string }}"
     mode: '0770'
   with_fileglob:
     - "../templates/scripts/*"
@@ -71,5 +71,5 @@
     name: "Create backup"
     minute: "0"
     hour: "1"
-    user: "{{ remote_user | string }}"
+    user: "{{ user | string }}"
     job: "sh /srv/backup/backup.sh"

@@ -11,5 +11,12 @@ docker/group_vars/*
 !docker/group_vars/all_dist.yml
 docker/host_vars/*
 !docker/host_vars/example_dist.yml
+
+# Traefik
+
 docker/roles/traefik/templates/dynamic_conf.yml
 docker/roles/traefik/templates/traefik.yml
+
+# Prometheus
+
+docker/roles/prometheus/templates/prometheus.yml

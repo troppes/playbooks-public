@@ -1,0 +1,38 @@
+---
+- name: Create Folder for Grafana
+  ansible.builtin.file:
+    path: /srv/grafana
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+  
+- name: Deploy Grafana
+  community.docker.docker_container:
+    image: grafana/grafana-oss:latest
+    name: grafana
+    user: root
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true
+    network_mode: default
+    networks:
+      - name: "prometheus"
+      - name: "traefik"
+    volumes:
+      - /srv/grafana:/var/lib/grafana
+    labels:
+      traefik.enable: "true"
+      # Grafana
+      traefik.http.routers.grafana.rule: "Host(`grafana.{{ base_url | string }}`)"
+      traefik.http.routers.grafana.entrypoints: "web-secure"
+      traefik.http.routers.grafana.tls: "true"
+      traefik.http.routers.grafana.tls.certresolver: "cert-reitz"
+      traefik.http.routers.grafana.service: "grafana-lb"
+      # Grafana HTTPS-Upgrade
+      traefik.http.routers.grafana-unsecure.rule: "Host(`grafana.{{ base_url | string }}`)"
+      traefik.http.routers.grafana-unsecure.entrypoints: "web"
+      traefik.http.routers.grafana-unsecure.middlewares: "redirect-https@file"
+      traefik.http.routers.grafana-unsecure.service: "grafana-lb"
+      # load-Balancer to route to another port
+      traefik.http.services.grafana-lb.loadbalancer.server.port: "3000"

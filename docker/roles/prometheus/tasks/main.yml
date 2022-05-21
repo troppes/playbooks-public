@@ -1,0 +1,60 @@
+---
+- name: Create Folder for Prometheus
+  ansible.builtin.file:
+    path: /srv/prometheus
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+
+- name: Copy Prometheus Config (prometheus.yml)
+  template:
+    src: prometheus.yml
+    dest: /srv/prometheus/prometheus.yml
+    owner: flo
+    group: flo
+    mode: '0664'
+
+- name: Deploy Prometheus
+  community.docker.docker_container:
+    image: prom/prometheus:latest
+    name: prometheus
+    user: root
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true
+    network_mode: default
+    networks:
+      - name: "prometheus"
+      - name: "traefik"
+    volumes:
+      - /srv/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - /srv/prometheus/data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+
+- name: Deploy Node Exporter
+  community.docker.docker_container:
+    image: prom/node-exporter:latest
+    name: node-exporter
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true
+    network_mode: default
+    networks:
+      - name: "prometheus"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    expose:
+      - "9100"
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'

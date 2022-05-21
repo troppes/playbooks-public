@@ -1,6 +1,6 @@
 ---
-remote_user: "user"
-roles:
+user: "user"
+deployed_services:
     - common
     - mariadb
     - traefik
@@ -12,9 +12,13 @@ roles:
     - directus
     - website
     - nextcloud
+    - photoprism
+    - prometheus
+    - grafana
 additional_containers:
     - drone-runner-docker
     - drone-runner-ssh
+    - node-exporter
 
 # Backup Storage
 retrive_logs: false

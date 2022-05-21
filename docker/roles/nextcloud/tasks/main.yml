@@ -85,5 +85,5 @@
   ansible.builtin.cron:
     name: "Nextcloud"
     minute: "*/5"
-    user: "{{ remote_user | string }}"
+    user: "{{ user | string }}"
     job: "docker exec -u www-data nextcloud php -f /var/www/html/cron.php"

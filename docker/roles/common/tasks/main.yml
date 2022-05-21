@@ -8,3 +8,9 @@
   community.docker.docker_network:
     name: mariadb
     internal: true
+
+- name: Create Prometheus Internal Network
+  community.docker.docker_network:
+    name: prometheus
+    internal: true
+

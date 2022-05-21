@@ -52,5 +52,12 @@ certificatesResolvers:
      #caServer: "https://acme-staging-v02.api.letsencrypt.org/directory"
      tlsChallenge: {}
 
-pilot:
-    token: "token"
+metrics:
+  prometheus:
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServiceLabels: true
+    buckets:
+      - 1
+      - 2
+      - 5

@@ -44,6 +44,18 @@ ts_mariadb_database:
 ts_mariadb_username:
 ts_mariadb_password:
 
+# Firefly III
+ff_mariadb_database:
+ff_mariadb_username:
+ff_mariadb_password:
+ff_app_key:
+
+# Firefly III Importer
+ff_ac_token:
+ff_interal_url:
+ff_nordigen_id:
+ff_nordigen_key:
+
 # Photoprism
 ps_mariadb_database:
 ps_mariadb_username:
@@ -65,8 +77,3 @@ vite_app_backend_url:
 vite_app_external_assets_url:
 vite_app_access_token:
 vite_app_lightgallery_key:
-
-# Grafana
-grafana_url:
-grafana_user:
-grafana_pass:

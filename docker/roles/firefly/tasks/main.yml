@@ -1,0 +1,98 @@
+---
+- name: Create Folder for Firefly III
+  ansible.builtin.file:
+    path: /srv/firefly
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+
+- name: Check if DB exists
+  command: docker exec mariadb bash -l -c 'mysql -p{{ mariadb_root_password | quote }} -e "SHOW DATABASES;" | grep -c {{ ff_mariadb_database | string }}'
+  register: result
+  changed_when: result.stdout == 0
+  retries: 6
+  delay: 5
+  failed_when: result.stderr_lines | length > 0  # If the DB is not up yet, try for 30 sec
+  until: result is not failed
+
+- name: Create Database
+  command: >
+    docker exec mariadb bash -l -c 'mysql -p{{ mariadb_root_password | quote }} -e "
+     CREATE DATABASE {{ ff_mariadb_database | string }};"'
+  when: result.stdout == "0"
+
+- name: Create Database User
+  command: >
+   docker exec mariadb mysql -p{{ mariadb_root_password | quote }} -e "
+     CREATE USER '{{ ff_mariadb_username | string }}'@'%' IDENTIFIED BY '{{ ff_mariadb_password | string }}';"
+  when: result.stdout == "0"
+
+- name: Give Priviliges
+  command: >
+   docker exec mariadb mysql -p{{ mariadb_root_password | quote }} -e "
+     GRANT ALL PRIVILEGES ON {{ ff_mariadb_database | string }}.* TO '{{ ff_mariadb_username | string }}'@'%';"
+  when: result.stdout == "0"
+
+- name: Deploy Firefly III
+  community.docker.docker_container:
+    image: fireflyiii/core:latest
+    name: firefly
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true
+    network_mode: default
+    networks:
+      - name: "traefik"
+      - name: "mariadb"
+    volumes:
+      - /srv/firefly/upload:/var/www/html/storage/upload
+    env:
+      TZ: Europe/Amsterdam
+      MAIL_MAILER: log
+      MAIL_HOST: "{{ mail_host | string }}"
+      MAIL_PORT: "{{ mail_port | string }}"
+      MAIL_FROM: "{{ mail_from | string }}"
+      MAIL_USERNAME: "{{ mail_username | string }}"
+      MAIL_PASSWORD: "{{ mail_password | string }}"
+      MAIL_ENCRYPTION: "{{ mail_encryption | string }}"
+      DB_HOST: "{{ db_host | string }}"
+      DB_DATABASE: "{{ ff_mariadb_database | string }}"
+      DB_USERNAME: "{{ ff_mariadb_username | string }}"
+      DB_PORT: "{{ db_port | string }}" 
+      DB_CONNECTION: mysql 
+      DB_PASSWORD: "{{ ff_mariadb_password | string }}" 
+      APP_KEY: "{{ ff_app_key | string }}"  
+      APP_URL: https://finance.reitz.dev 
+      TRUSTED_PROXIES: "**"
+    labels:
+      traefik.enable: "true"
+      # firefly Websocket
+      traefik.http.routers.firefly.rule: "Host(`finance.{{ base_url | string }}`)"
+      traefik.http.routers.firefly.entrypoints: "web-secure"
+      traefik.http.routers.firefly.tls: "true"
+      traefik.http.routers.firefly.tls.certresolver: "cert-reitz"
+      traefik.http.routers.firefly.service: "firefly-lb"
+      # firefly Websocket HTTPS-Upgrade
+      traefik.http.routers.firefly-unsecure.rule: "Host(`finance.{{ base_url | string }}`)"
+      traefik.http.routers.firefly-unsecure.entrypoints: "web"
+      traefik.http.routers.firefly-unsecure.middlewares: "redirect-https@file"
+      traefik.http.routers.firefly-unsecure.service: "firefly-lb"
+      # load-Balancer to route to another port
+      traefik.http.services.firefly-lb.loadbalancer.server.port: "8080"
+
+- name: Copy Import Script
+  template:
+    src: import.sh
+    dest: /srv/firefly/importer/import.sh
+    owner: "{{ user | string }}"
+    group: "{{ user | string }}"
+    mode: '0770'
+
+- name: Cron Import Script
+  ansible.builtin.cron:
+    name: "Import finances"
+    minute: "0"
+    hour: "*/3"
+    user: "{{ user | string }}"
+    job: "sh /srv/firefly/importer/import.sh"

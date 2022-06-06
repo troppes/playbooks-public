@@ -1,0 +1,36 @@
+---
+- name: Create Folder for SearXNG
+  ansible.builtin.file:
+    path: /srv/searxng
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+
+- name: Deploy SearXNG
+  community.docker.docker_container:
+    image: searxng/searxng:latest
+    name: searxng
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true  # Removes Container from all Networks not contained in networks parameter
+    network_mode: default
+    networks:
+      - name: "traefik"
+    env:
+      BASE_URL: "http://search.{{ base_url | string }}" 
+      INSTANCE_NAME: "reitz-search"
+    volumes:
+      - /srv/searxng:/etc/searxng
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.searxng.rule: "Host(`search.{{ base_url | string }}`)"
+      traefik.http.routers.searxng.tls: "true"
+      traefik.http.routers.searxng.tls.certresolver: "cert-reitz"
+      traefik.http.routers.searxng.entrypoints: "web-secure"
+      traefik.http.routers.searxng.service: "searxng-lb"
+      traefik.http.routers.searxng-unsecure.rule: "Host(`search.{{ base_url | string }}`)"
+      traefik.http.routers.searxng-unsecure.entrypoints: "web"
+      traefik.http.routers.searxng-unsecure.middlewares: "redirect-https@file"
+      # load-Balancer to route to another port
+      traefik.http.services.searxng-lb.loadbalancer.server.port: "8080"

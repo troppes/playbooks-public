@@ -15,6 +15,8 @@ deployed_services:
     - photoprism
     - prometheus
     - grafana
+    - firefly
+    
 additional_containers:
     - drone-runner-docker
     - drone-runner-ssh

@@ -93,6 +93,6 @@
   ansible.builtin.cron:
     name: "Import finances"
     minute: "0"
-    hour: "*/3"
+    hour: "*/4"
     user: "{{ user | string }}"
-    job: "sh /srv/firefly/importer/import.sh"
+    job: "bash /srv/firefly/importer/import.sh"

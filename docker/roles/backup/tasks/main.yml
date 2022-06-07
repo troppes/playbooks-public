@@ -40,7 +40,7 @@
 
 - name: Suffix List to make comparisons possible
   set_fact:
-    backup_names: "{{ roles | product(['.sh']) | map('join') | list }}"
+    backup_names: "{{ deployed_services | product(['.sh']) | map('join') | list }}"
 
 - name: List all backup scripts for services
   find:
@@ -72,4 +72,4 @@
     minute: "0"
     hour: "1"
     user: "{{ user | string }}"
-    job: "sh /srv/backup/backup.sh"
+    job: "bash /srv/backup/backup.sh"

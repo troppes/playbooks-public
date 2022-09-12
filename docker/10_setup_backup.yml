@@ -10,7 +10,7 @@
 
 - name: Setup Storage
   hosts: khadas
-  remote_user: "{{ user }}"
+  remote_user: "{{ backup_user }}"
   become: true
   vars:
     ansible_become_pass: "{{ root_pass }}"

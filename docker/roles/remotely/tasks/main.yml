@@ -1,0 +1,34 @@
+---
+- name: Create Folder for Directus (database)
+  ansible.builtin.file:
+    path: /srv/remotely/
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+
+
+- name: Deploy Website Backend
+  community.docker.docker_container:
+    image: translucency/remotely:latest
+    name: remotely
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true
+    network_mode: default
+    networks:
+      - name: "traefik"
+    volumes:
+      - /srv/remotely/:/remotely-data
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.remotely.rule: "Host(`remotely.{{ base_url | string }}`)"
+      traefik.http.routers.remotely.tls: "true"
+      traefik.http.routers.remotely.tls.certresolver: "cert-reitz"
+      traefik.http.routers.remotely.entrypoints: "web-secure"
+      traefik.http.routers.remotely.service: "remotely-lb"
+      traefik.http.routers.remotely-unsecure.rule: "Host(`remotely.{{ base_url | string }}`)"
+      traefik.http.routers.remotely-unsecure.entrypoints: "web"
+      traefik.http.routers.remotely-unsecure.middlewares: "redirect-https@file"
+      # load-Balancer to route to another port
+      traefik.http.services.remotely-lb.loadbalancer.server.port: "5000"

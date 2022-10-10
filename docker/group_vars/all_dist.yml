@@ -16,6 +16,7 @@ deployed_services:
     - prometheus
     - grafana
     - firefly
+    - remotely
     
 additional_containers:
     - drone-runner-docker

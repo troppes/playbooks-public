@@ -1,2 +1,6 @@
 root_pass: rootpass
 new_root_pass: newrotpass # password to change to
+base_url: url.home
+base_url_private: url.home
+root_pass: rootpass
+root_user: rootuser

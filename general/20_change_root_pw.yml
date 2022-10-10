@@ -1,12 +1,12 @@
 ---
 - name: Change password
   hosts: all
-  remote_user: flo
+  remote_user: "{{ root_user }}"
   become: true
   vars:
     ansible_become_pass: "{{ root_pass }}"
   tasks:
     - user:
-        name: flo
+        remote_user: "{{ root_user }}"
         update_password: always
         password: "{{ new_root_pass | password_hash('sha512') }}"

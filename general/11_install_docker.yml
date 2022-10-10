@@ -1,7 +1,7 @@
 ---
 - name: Install Docker
   hosts: ubuntu_pres
-  remote_user: flo
+  remote_user: "{{ root_user }}"
   become: true
   vars:
     ansible_become_pass: "{{ root_pass }}"

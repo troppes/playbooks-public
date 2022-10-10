@@ -1,7 +1,7 @@
 ---
 - name: Reboot Systems
   hosts: all
-  remote_user: flo
+  remote_user: "{{ root_user }}"
   become: true
   vars:
     ansible_become_pass: "{{ root_pass }}"

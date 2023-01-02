@@ -1,4 +1,13 @@
 ---
+- name: Create Folder for Washtrak Database
+  ansible.builtin.file:
+    path: /srv/washtrak
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+
+
 - name: Deploy Washtrak Backend
   community.docker.docker_container:
     image: floreitz/washtrak_backend:latest
@@ -9,6 +18,8 @@
     network_mode: default
     networks:
       - name: "traefik"
+    volumes:
+      - /srv/washtrak/database:/app/database/
     env:
       API_ADMIN: "{{ washback_user }}"
       API_PASSWORD: "{{ washback_pass }}"

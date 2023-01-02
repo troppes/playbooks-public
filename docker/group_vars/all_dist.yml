@@ -17,6 +17,7 @@ deployed_services:
     - grafana
     - firefly
     - remotely
+    - washtrak
     
 additional_containers:
     - drone-runner-docker

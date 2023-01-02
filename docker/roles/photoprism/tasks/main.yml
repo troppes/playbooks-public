@@ -60,7 +60,7 @@
 
 - name: Deploy Photoprism
   community.docker.docker_container:
-    image: photoprism/photoprism:latest
+    image: photoprism/photoprism:preview
     name: photoprism
     state: started
     restart_policy: unless-stopped

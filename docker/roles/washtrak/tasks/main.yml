@@ -1,0 +1,54 @@
+---
+- name: Deploy Washtrak Backend
+  community.docker.docker_container:
+    image: floreitz/washtrak_backend:latest
+    name: washback
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true
+    network_mode: default
+    networks:
+      - name: "traefik"
+    env:
+      API_ADMIN: "{{ washback_user }}"
+      API_PASSWORD: "{{ washback_pass }}"
+      DEMO_DATA: "false"
+      PORT: "{{ washback_port }}"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.washback.rule: "Host(`washback.{{ base_url | string }}`)"
+      traefik.http.routers.washback.tls: "true"
+      traefik.http.routers.washback.tls.certresolver: "cert-reitz"
+      traefik.http.routers.washback.entrypoints: "web-secure"
+      traefik.http.routers.washback-unsecure.rule: "Host(`washback.{{ base_url | string }}`)"
+      traefik.http.routers.washback-unsecure.entrypoints: "web"
+      traefik.http.routers.washback-unsecure.middlewares: "redirect-https@file"
+
+- name: Deploy Washtrak Frontend
+  community.docker.docker_container:
+    image: floreitz/washtrak_frontend:latest
+    name: washtrak
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true  # Removes Container from all Networks not contained in networks parameter
+    network_mode: default
+    networks:
+      - name: "traefik"
+    env:
+      PUBLIC_BACKEND_URL: "https://washback.{{ base_url | string }}/api"
+      INTERNAL_BACKEND_URL: "{{ washtrak_interal_url }}"
+      DISPLAY_USER: "{{ washtrak_display_user }}"
+      DISPLAY_PASSWORD: "{{ washtrak_display_pass }}"
+      PORT: "8080"
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.washtrak.rule: "Host(`washtrak.{{ base_url | string }}`)"
+      traefik.http.routers.washtrak.tls: "true"
+      traefik.http.routers.washtrak.tls.certresolver: "cert-reitz"
+      traefik.http.routers.washtrak.entrypoints: "web-secure"
+      traefik.http.routers.washtrak.service: "washtrak-lb"
+      traefik.http.routers.washtrak-unsecure.rule: "Host(`washtrak.{{ base_url | string }}`)"
+      traefik.http.routers.washtrak-unsecure.entrypoints: "web"
+      traefik.http.routers.washtrak-unsecure.middlewares: "redirect-https@file"
+      # load-Balancer to route to another port
+      traefik.http.services.washtrak-lb.loadbalancer.server.port: "8080"

@@ -77,3 +77,12 @@ vite_app_backend_url:
 vite_app_external_assets_url:
 vite_app_access_token:
 vite_app_lightgallery_key:
+
+# Washtrak / Washback
+washback_port: 
+washback_user: 
+washback_pass: 
+
+washtrak_interal_url:
+washtrak_display_user:
+washtrak_display_pass:

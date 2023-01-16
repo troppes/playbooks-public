@@ -47,7 +47,7 @@
       - name: "traefik"
     env:
       PUBLIC_BACKEND_URL: "https://washback.{{ base_url | string }}/api"
-      INTERNAL_BACKEND_URL: "{{ washtrak_interal_url }}"
+      INTERNAL_BACKEND_URL: "https://washback.{{ base_url | string }}/api"
       DISPLAY_USER: "{{ washtrak_display_user }}"
       DISPLAY_PASSWORD: "{{ washtrak_display_pass }}"
       PORT: "8080"

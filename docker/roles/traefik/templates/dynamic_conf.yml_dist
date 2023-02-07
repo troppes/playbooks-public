@@ -17,6 +17,21 @@ http:
       entryPoints:
         - web-secure
 
+    plex-unsecure:
+      rule: "Host(`media.troppes.de`)"
+      service: plex-lb
+      middlewares:
+        - redirect-https
+      entryPoints:
+        - web
+    plex:
+      rule: "Host(`media.troppes.de`)"
+      service: plex-lb
+      tls:
+        certResolver: cert-reitz
+      entryPoints:
+        - web-secure
+
   middlewares:
     auth:
       basicAuth:
@@ -38,3 +53,10 @@ http:
         regex: "https://(.*)/.well-known/(card|cal)dav"
         replacement: "https://${1}/remote.php/dav/"
         permanent: true
+
+
+  services:  
+    plex-lb:     
+      loadBalancer:
+        servers:
+          - url: "http://ip:port/"

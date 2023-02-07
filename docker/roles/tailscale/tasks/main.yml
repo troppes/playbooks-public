@@ -1,0 +1,17 @@
+---
+- name: Deploy Tailscale
+  community.docker.docker_container:
+    image: tailscale/tailscale:stable
+    name: tailscale
+    privileged: true
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true  # Removes Container from all Networks not contained in networks parameter
+    capabilities:
+      - NET_ADMIN
+      - NET_RAW
+    network_mode: host
+    volumes:
+      - "/srv/tailscale/:/var/lib"
+      - "/dev/net/tun:/dev/net/tun"
+    env: 

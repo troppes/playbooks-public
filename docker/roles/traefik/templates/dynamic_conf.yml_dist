@@ -18,14 +18,14 @@ http:
         - web-secure
 
     plex-unsecure:
-      rule: "Host(`media.troppes.de`)"
+      rule: "Host(`media.host.com`)"
       service: plex-lb
       middlewares:
         - redirect-https
       entryPoints:
         - web
     plex:
-      rule: "Host(`media.troppes.de`)"
+      rule: "Host(`media.host.com`)"
       service: plex-lb
       tls:
         certResolver: cert-reitz

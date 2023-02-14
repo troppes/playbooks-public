@@ -18,6 +18,9 @@ deployed_services:
     - firefly
     - remotely
     - washtrak
+    - tailscale
+    - changedetection
+
     
 additional_containers:
     - drone-runner-docker

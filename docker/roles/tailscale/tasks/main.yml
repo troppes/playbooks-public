@@ -3,6 +3,7 @@
   community.docker.docker_container:
     image: tailscale/tailscale:stable
     name: tailscale
+    command: "tailscaled"
     privileged: true
     state: started
     restart_policy: unless-stopped
@@ -14,4 +15,3 @@
     volumes:
       - "/srv/tailscale/:/var/lib"
       - "/dev/net/tun:/dev/net/tun"
-    env: 

@@ -1,0 +1,67 @@
+---
+- name: Create Folder for changedetection.io
+  ansible.builtin.file:
+    path: /srv/changedetection/
+    owner: flo
+    group: flo
+    state: directory
+    mode: '0775'
+
+
+- name: Deploy playwright-chrome helper
+  community.docker.docker_container:
+    image: browserless/chrome
+    name: playwright-chrome
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true
+    network_mode: default
+    networks:
+      - name: "traefik"
+    env:
+      SCREEN_WIDTH: "1920"
+      SCREEN_HEIGHT: "1024"
+      SCREEN_DEPTH: "16"
+      ENABLE_DEBUGGER: "false"
+      PREBOOT_CHROME: "true"
+      CONNECTION_TIMEOUT: "300000"
+      MAX_CONCURRENT_SESSIONS: "10"
+      CHROME_REFRESH_TIME: "600000"
+      DEFAULT_BLOCK_ADS: "true"
+      DEFAULT_STEALTH: "true"
+
+- name: Deploy changedetection.io
+  community.docker.docker_container:
+    image: dgtlmoon/changedetection.io
+    name: changedetection
+    state: started
+    restart_policy: unless-stopped
+    purge_networks: true
+    network_mode: default
+    networks:
+      - name: "traefik"
+    volumes:
+      - /srv/changedetection:/datastore
+    env:
+      BASE_URL: "https://change.{{ base_url | string }}"
+      PLAYWRIGHT_DRIVER_URL: "ws://playwright-chrome:3000/?stealth=1&--disable-web-security=true"
+      HIDE_REFERER: "true"
+    labels:
+      traefik.enable: "true"
+      # changedetection.io
+      traefik.http.routers.changedetect.rule: "Host(`change.{{ base_url | string }}`)"
+      traefik.http.routers.changedetect.entrypoints: "web-secure"
+      traefik.http.routers.changedetect.tls: "true"
+      traefik.http.routers.changedetect.tls.certresolver: "cert-reitz"
+      traefik.http.routers.changedetect.service: "changedetect-lb"
+      # changedetection.io HTTPS-Upgrade
+      traefik.http.routers.changedetect-unsecure.rule: "Host(`change.{{ base_url | string }}`)"
+      traefik.http.routers.changedetect-unsecure.entrypoints: "web"
+      traefik.http.routers.changedetect-unsecure.middlewares: "redirect-https@file"
+      traefik.http.routers.changedetect-unsecure.service: "changedetect-lb"
+      # load-Balancer to route to another port
+      traefik.http.services.changedetect-lb.loadbalancer.server.port: "5000"
+
+
+
+

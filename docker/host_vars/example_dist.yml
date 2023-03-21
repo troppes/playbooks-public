@@ -85,3 +85,11 @@ washback_pass:
 
 washtrak_display_user:
 washtrak_display_pass:
+
+# Bitwarden
+bw_mariadb_database:
+bw_mariadb_username:
+bw_mariadb_password: 
+bw_inst_id:
+bw_inst_key:
+bw_admins:

@@ -20,12 +20,14 @@ deployed_services:
     - washtrak
     - tailscale
     - changedetection
+    - bitwarden
 
     
 additional_containers:
     - drone-runner-docker
     - drone-runner-ssh
     - node-exporter
+    - washback
 
 # Backup Storage
 retrive_logs: false

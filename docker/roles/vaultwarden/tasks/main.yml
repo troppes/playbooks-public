@@ -27,24 +27,24 @@
     labels:
       traefik.enable: "true"
       # Vaultwarden UI
-      traefik.http.routers.vaultwarden-ui.rule: "Host(`vault.{{ base_url | string }}`)"
+      traefik.http.routers.vaultwarden-ui.rule: "Host(`vaultwarden.{{ base_url | string }}`)"
       traefik.http.routers.vaultwarden-ui.entrypoints: "web-secure"
       traefik.http.routers.vaultwarden-ui.tls: "true"
       traefik.http.routers.vaultwarden-ui.tls.certresolver: "cert-reitz"
       traefik.http.routers.vaultwarden-ui.service: "vaultwarden-ui-lb"
       # Vaultwarden UI HTTPS-Upgrade
-      traefik.http.routers.vaultwarden-ui-unsecure.rule: "Host(`vault.{{ base_url | string }}`)"
+      traefik.http.routers.vaultwarden-ui-unsecure.rule: "Host(`vaultwarden.{{ base_url | string }}`)"
       traefik.http.routers.vaultwarden-ui-unsecure.entrypoints: "web"
       traefik.http.routers.vaultwarden-ui-unsecure.middlewares: "redirect-https@file"
       traefik.http.routers.vaultwarden-ui-unsecure.service: "vaultwarden-ui-lb"
       # Vaultwarden Websocket
-      traefik.http.routers.vaultwarden-websocket.rule: "Host(`vault.{{ base_url | string }}`) && Path(`/notifications/hub`)"
+      traefik.http.routers.vaultwarden-websocket.rule: "Host(`vaultwarden.{{ base_url | string }}`) && Path(`/notifications/hub`)"
       traefik.http.routers.vaultwarden-websocket.entrypoints: "web-secure"
       traefik.http.routers.vaultwarden-websocket.tls: "true"
       traefik.http.routers.vaultwarden-websocket.tls.certresolver: "cert-reitz"
       traefik.http.routers.vaultwarden-websocket.service: "vaultwarden-websocket-lb"
       # Vaultwarden Websocket HTTPS-Upgrade
-      traefik.http.routers.vaultwarden-websocket-unsecure.rule: "Host(`vault.{{ base_url | string }}`) && Path(`/notifications/hub`)"
+      traefik.http.routers.vaultwarden-websocket-unsecure.rule: "Host(`vaultwarden.{{ base_url | string }}`) && Path(`/notifications/hub`)"
       traefik.http.routers.vaultwarden-websocket-unsecure.entrypoints: "web"
       traefik.http.routers.vaultwarden-websocket-unsecure.middlewares: "redirect-https@file"
       traefik.http.routers.vaultwarden-websocket-unsecure.service: "vaultwarden-websocket-lb"

@@ -49,7 +49,7 @@
       - /srv/bitwarden:/etc/bitwarden
     env:
       # Database
-      BW_DOMAIN: nvault.{{ base_url | string }}
+      BW_DOMAIN: vault.{{ base_url | string }}
       BW_DB_PROVIDER: mysql
       BW_DB_SERVER: "{{ db_host | string }}"
       BW_DB_DATABASE: "{{ bw_mariadb_database | string }}"
@@ -67,13 +67,13 @@
     labels:
       traefik.enable: "true"
       # Bitwarden
-      traefik.http.routers.bitwarden.rule: "Host(`nvault.{{ base_url | string }}`)"
+      traefik.http.routers.bitwarden.rule: "Host(`vault.{{ base_url | string }}`)"
       traefik.http.routers.bitwarden.entrypoints: "web-secure"
       traefik.http.routers.bitwarden.tls: "true"
       traefik.http.routers.bitwarden.tls.certresolver: "cert-reitz"
       traefik.http.routers.bitwarden.service: "bitwarden-lb"
       # Bitwarden HTTPS-Upgrade
-      traefik.http.routers.bitwarden-unsecure.rule: "Host(`nvault.{{ base_url | string }}`)"
+      traefik.http.routers.bitwarden-unsecure.rule: "Host(`vault.{{ base_url | string }}`)"
       traefik.http.routers.bitwarden-unsecure.entrypoints: "web"
       traefik.http.routers.bitwarden-unsecure.middlewares: "redirect-https@file"
       traefik.http.routers.bitwarden-unsecure.service: "bitwarden-lb"

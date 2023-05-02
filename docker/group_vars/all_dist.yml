@@ -18,7 +18,6 @@ deployed_services:
     - firefly
     - remotely
     - washtrak
-    - tailscale
     - changedetection
     - bitwarden
 

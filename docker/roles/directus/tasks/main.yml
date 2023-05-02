@@ -52,7 +52,7 @@
 
 - name: Deploy Website Backend
   community.docker.docker_container:
-    image: directus/directus:latest
+    image: directus/directus:9.23.1
     name: directus
     state: started
     restart_policy: unless-stopped
@@ -81,7 +81,7 @@
       EMAIL_SMTP_PORT: "{{ mail_port | string }}"
       EMAIL_SMTP_USER: "{{ mail_username | string }}"
       EMAIL_SMTP_PASSWORD: "{{ mail_password | string }}"
-      EMAIL_SMTP_SECURE: "0"
+      EMAIL_SMTP_SECURE: "1"
       CORS_ENABLED: "true"
     labels:
       traefik.enable: "true"
